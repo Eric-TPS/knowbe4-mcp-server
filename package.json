@@ -1,0 +1,33 @@
+{
+  "name": "knowbe4-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for KnowBe4 Reporting REST API",
+  "type": "module",
+  "bin": {
+    "knowbe4-mcp-server": "./build/src/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "start": "node build/src/index.js",
+    "test": "npm run build && node --test build/tests/**/*.test.js",
+    "test:watch": "npm run build && node --test --watch build/tests/**/*.test.js"
+  },
+  "keywords": [
+    "mcp",
+    "knowbe4",
+    "security-awareness",
+    "phishing",
+    "training"
+  ],
+  "author": "Mirage Security <https://miragesecurity.ai>",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "dotenv": "^16.4.5",
+    "typescript": "^5.7.2"
+  }
+}
