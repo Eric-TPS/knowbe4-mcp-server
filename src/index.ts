@@ -37,6 +37,14 @@ const getBaseUrl = (region: string): string => {
   return baseUrls[region] || baseUrls.us;
 };
 
+// URL-encode a path segment. Every interpolated ID in an endpoint path must
+// pass through this so a malformed id can't escape its segment (e.g.
+// "../account" or "foo?bar=baz"). Auth still scopes to the caller's
+// KnowBe4 account, so this is defense-in-depth, not a live vuln fix.
+const seg = (v: unknown): string => encodeURIComponent(String(v));
+
+const KB4_FETCH_TIMEOUT_MS = 30_000;
+
 // Generic API call function
 async function callKB4API(
   endpoint: string,
@@ -58,6 +66,7 @@ async function callKB4API(
       Authorization: `Bearer ${config.apiKey}`,
       Accept: "application/json",
     },
+    signal: AbortSignal.timeout(KB4_FETCH_TIMEOUT_MS),
   });
 
   if (!response.ok) {
@@ -630,21 +639,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!args || typeof args !== "object" || !("user_id" in args)) {
           throw new Error("user_id is required");
         }
-        endpoint = `/v1/users/${args.user_id}`;
+        endpoint = `/v1/users/${seg(args.user_id)}`;
         break;
 
       case "get_group_members":
         if (!args || typeof args !== "object" || !("group_id" in args)) {
           throw new Error("group_id is required");
         }
-        endpoint = `/v1/groups/${args.group_id}/members`;
+        endpoint = `/v1/groups/${seg(args.group_id)}/members`;
         break;
 
       case "get_user_risk_score_history":
         if (!args || typeof args !== "object" || !("user_id" in args)) {
           throw new Error("user_id is required");
         }
-        endpoint = `/v1/users/${args.user_id}/risk_score_history`;
+        endpoint = `/v1/users/${seg(args.user_id)}/risk_score_history`;
         if ("full" in args && args.full) params.full = "true";
         break;
 
@@ -660,14 +669,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!args || typeof args !== "object" || !("group_id" in args)) {
           throw new Error("group_id is required");
         }
-        endpoint = `/v1/groups/${args.group_id}`;
+        endpoint = `/v1/groups/${seg(args.group_id)}`;
         break;
 
       case "get_group_risk_score_history":
         if (!args || typeof args !== "object" || !("group_id" in args)) {
           throw new Error("group_id is required");
         }
-        endpoint = `/v1/groups/${args.group_id}/risk_score_history`;
+        endpoint = `/v1/groups/${seg(args.group_id)}/risk_score_history`;
         if ("full" in args && args.full) params.full = "true";
         break;
 
@@ -680,7 +689,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!args || typeof args !== "object" || !("campaign_id" in args)) {
           throw new Error("campaign_id is required");
         }
-        endpoint = `/v1/phishing/campaigns/${args.campaign_id}`;
+        endpoint = `/v1/phishing/campaigns/${seg(args.campaign_id)}`;
         if ("campaign_type" in args && args.campaign_type) {
           params.campaign_type = String(args.campaign_type);
         }
@@ -697,7 +706,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!args || typeof args !== "object" || !("campaign_id" in args)) {
           throw new Error("campaign_id is required");
         }
-        endpoint = `/v1/phishing/campaigns/${args.campaign_id}/security_tests`;
+        endpoint = `/v1/phishing/campaigns/${seg(args.campaign_id)}/security_tests`;
         if ("campaign_type" in args && args.campaign_type) {
           params.campaign_type = String(args.campaign_type);
         }
@@ -707,7 +716,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!args || typeof args !== "object" || !("pst_id" in args)) {
           throw new Error("pst_id is required");
         }
-        endpoint = `/v1/phishing/security_tests/${args.pst_id}`;
+        endpoint = `/v1/phishing/security_tests/${seg(args.pst_id)}`;
         if ("campaign_type" in args && args.campaign_type) {
           params.campaign_type = String(args.campaign_type);
         }
@@ -717,7 +726,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!args || typeof args !== "object" || !("pst_id" in args)) {
           throw new Error("pst_id is required");
         }
-        endpoint = `/v1/phishing/security_tests/${args.pst_id}/recipients`;
+        endpoint = `/v1/phishing/security_tests/${seg(args.pst_id)}/recipients`;
         if ("campaign_type" in args && args.campaign_type) {
           params.campaign_type = String(args.campaign_type);
         }
@@ -732,7 +741,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         ) {
           throw new Error("pst_id and recipient_id are required");
         }
-        endpoint = `/v1/phishing/security_tests/${args.pst_id}/recipients/${args.recipient_id}`;
+        endpoint = `/v1/phishing/security_tests/${seg(args.pst_id)}/recipients/${seg(args.recipient_id)}`;
         if ("campaign_type" in args && args.campaign_type) {
           params.campaign_type = String(args.campaign_type);
         }
@@ -747,7 +756,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!args || typeof args !== "object" || !("store_purchase_id" in args)) {
           throw new Error("store_purchase_id is required");
         }
-        endpoint = `/v1/training/store_purchases/${args.store_purchase_id}`;
+        endpoint = `/v1/training/store_purchases/${seg(args.store_purchase_id)}`;
         break;
 
       case "get_policies":
@@ -758,7 +767,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!args || typeof args !== "object" || !("policy_id" in args)) {
           throw new Error("policy_id is required");
         }
-        endpoint = `/v1/training/policies/${args.policy_id}`;
+        endpoint = `/v1/training/policies/${seg(args.policy_id)}`;
         break;
 
       case "get_training_campaigns":
@@ -777,7 +786,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!args || typeof args !== "object" || !("campaign_id" in args)) {
           throw new Error("campaign_id is required");
         }
-        endpoint = `/v1/training/campaigns/${args.campaign_id}`;
+        endpoint = `/v1/training/campaigns/${seg(args.campaign_id)}`;
         break;
 
       case "get_training_enrollments":
@@ -811,7 +820,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!args || typeof args !== "object" || !("enrollment_id" in args)) {
           throw new Error("enrollment_id is required");
         }
-        endpoint = `/v1/training/enrollments/${args.enrollment_id}`;
+        endpoint = `/v1/training/enrollments/${seg(args.enrollment_id)}`;
         if ("include_campaign_id" in args && args.include_campaign_id) {
           params.include_campaign_id = String(args.include_campaign_id);
         }
